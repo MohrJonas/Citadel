@@ -4,88 +4,92 @@
 
 set -eux
 
-mkdir -p /etc/citadel
-chmod -v 755 /etc/citadel
+sudo mkdir -p /etc/citadel
+sudo chmod -v 755 /etc/citadel
 
 # Log dir
-mkdir -pv /var/log/citadel
-chown -v root:root /var/log/citadel
-chmod -v 777 /var/log/citadel
-
+sudo mkdir -pv /var/log/citadel
+sudo chown -v root:root /var/log/citadel
+sudo chmod -v 777 /var/log/citadel
+ 
 # Images
-mkdir -pv /etc/citadel/images
-chmod -v 755 /etc/citadel/images
-cp -vr images/* /etc/citadel/images
-chown -Rv root:root /etc/citadel/images/*
-chmod -Rv 644 /etc/citadel/images/definitions/*
-chmod -Rv 644 /etc/citadel/images/files/*
-chmod -v 755 /etc/citadel/images/definitions
-chmod -v 755 /etc/citadel/images/files
-
+sudo mkdir -pv /etc/citadel/images
+sudo chmod -v 755 /etc/citadel/images
+sudo cp -vr images/* /etc/citadel/images
+sudo chown -Rv root:root /etc/citadel/images/*
+sudo chmod -Rv 644 /etc/citadel/images/definitions/*
+sudo chmod -Rv 644 /etc/citadel/images/files/*
+sudo chmod -v 755 /etc/citadel/images/definitions
+sudo chmod -v 755 /etc/citadel/images/files
+ 
 # Profiles
-mkdir -pv /etc/citadel/profiles
-chmod -v 755 /etc/citadel/profiles
-cp -v profiles/* /etc/citadel/profiles
-chown -v root:root /etc/citadel/profiles/*
-chmod -v 644 /etc/citadel/profiles/*
-
+sudo mkdir -pv /etc/citadel/profiles
+sudo chmod -v 755 /etc/citadel/profiles
+sudo cp -v profiles/* /etc/citadel/profiles
+sudo chown -v root:root /etc/citadel/profiles/*
+sudo chmod -v 644 /etc/citadel/profiles/*
+ 
 # Autostart
-mkdir -pv $HOME/.config/autostart
-cp -v etc/autostart/* $HOME/.config/autostart
-
+sudo mkdir -pv $HOME/.config/autostart
+sudo cp -v etc/autostart/* $HOME/.config/autostart
+ 
 # Python lib
-cp -vr libcitadel/citadel /usr/lib64/python3.13/site-packages
+sudo cp -vr libcitadel/citadel /usr/lib64/python3.13/site-packages
 
 # Bins
-cp -v etc/bin/build-images /sbin/build-images
-chown -v root:root /sbin/build-images
-chmod -v 755 /sbin/build-images
-
-cp -v etc/bin/cookiepatch /sbin/cookiepatch
-chown -v root:root /sbin/cookiepatch
-chmod -v 755 /sbin/cookiepatch
-
-cp etc/bin/import-profiles /sbin/import-profiles
-chown root:root /sbin/import-profiles
-chmod 755 /sbin/import-profiles
-
-cp -v etc/bin/run-container /sbin/run-container
-chown -v root:root /sbin/run-container
-chmod -v 755 /sbin/run-container
-
-cp -v etc/bin/sync-desktop /sbin/sync-desktop
-chown -v root:root /sbin/sync-desktop
-chmod -v 755 /sbin/sync-desktop
-
-cp -v etc/bin/upgrade-containers /sbin/upgrade-containers
-chown -v root:root /sbin/upgrade-containers
-chmod -v 755 /sbin/upgrade-containers
-
-cp -v etc/bin/create-container /sbin/create-container
-chown -v root:root /sbin/create-container
-chmod -v 755 /sbin/create-container
-
+sudo cp -v etc/bin/build-images /sbin/build-images
+sudo chown -v root:root /sbin/build-images
+sudo chmod -v 755 /sbin/build-images
+ 
+sudo cp -v etc/bin/cookiepatch /sbin/cookiepatch
+sudo chown -v root:root /sbin/cookiepatch
+sudo chmod -v 755 /sbin/cookiepatch
+ 
+sudo cp etc/bin/import-profiles /sbin/import-profiles
+sudo chown root:root /sbin/import-profiles
+sudo chmod 755 /sbin/import-profiles
+ 
+sudo cp -v etc/bin/run-container /sbin/run-container
+sudo chown -v root:root /sbin/run-container
+sudo chmod -v 755 /sbin/run-container
+ 
+sudo cp -v etc/bin/sync-desktop /sbin/sync-desktop
+sudo chown -v root:root /sbin/sync-desktop
+sudo chmod -v 755 /sbin/sync-desktop
+ 
+sudo cp -v etc/bin/upgrade-containers /sbin/upgrade-containers
+sudo chown -v root:root /sbin/upgrade-containers
+sudo chmod -v 755 /sbin/upgrade-containers
+ 
+sudo cp -v etc/bin/create-container /sbin/create-container
+sudo chown -v root:root /sbin/create-container
+sudo chmod -v 755 /sbin/create-container
+ 
 # Systemd
-cp -v etc/systemd/services/sync-desktop.service /etc/systemd/system/sync-desktop.service
-chown -v root:root /etc/systemd/system/sync-desktop.service
-chmod -v 644 /etc/systemd/system/sync-desktop.service
+sudo cp -v etc/systemd/services/sync-desktop.service /etc/systemd/system/sync-desktop.service
+sudo chown -v root:root /etc/systemd/system/sync-desktop.service
+sudo chmod -v 644 /etc/systemd/system/sync-desktop.service
+ 
+sudo cp -v etc/systemd/services/upgrade-containers.service /etc/systemd/system/upgrade-containers.service
+sudo chown -v root:root /etc/systemd/system/upgrade-containers.service
+sudo chmod -v 644 /etc/systemd/system/upgrade-containers.service
+ 
+sudo cp -v etc/systemd/timers/sync-desktop.timer /etc/systemd/system/sync-desktop.timer
+sudo chown -v root:root /etc/systemd/system/sync-desktop.timer
+sudo chmod -v 644 /etc/systemd/system/sync-desktop.timer
+ 
+sudo cp -v etc/systemd/timers/upgrade-containers.timer /etc/systemd/system/upgrade-containers.timer
+sudo chown -v root:root /etc/systemd/system/upgrade-containers.timer
+sudo chmod -v 644 /etc/systemd/system/upgrade-containers.timer
+ 
+sudo systemctl enable --now upgrade-containers.timer
+sudo systemctl enable --now sync-desktop.timer
 
-cp -v etc/systemd/services/upgrade-containers.service /etc/systemd/system/upgrade-containers.service
-chown -v root:root /etc/systemd/system/upgrade-containers.service
-chmod -v 644 /etc/systemd/system/upgrade-containers.service
-
-cp -v etc/systemd/timers/sync-desktop.timer /etc/systemd/system/sync-desktop.timer
-chown -v root:root /etc/systemd/system/sync-desktop.timer
-chmod -v 644 /etc/systemd/system/sync-desktop.timer
-
-cp -v etc/systemd/timers/upgrade-containers.timer /etc/systemd/system/upgrade-containers.timer
-chown -v root:root /etc/systemd/system/upgrade-containers.timer
-chmod -v 644 /etc/systemd/system/upgrade-containers.timer
-
-systemctl enable --now upgrade-containers.timer
-systemctl enable --now sync-desktop.timer
+# Autostart entries
+mkdir -pv ~/.config/autostart
+cp -v etc/autostart/* ~/.config/autostart
 
 import-profiles
-build-images
+sudo build-images
 
 echo "Done. Please make sure to initialize a incus storage pool with name citadel."

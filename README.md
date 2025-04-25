@@ -33,4 +33,4 @@ It is inspired by QubesOS, but makes various changes. These include:
 - Create a new storage called incus that holds the containers `incus storage create citadel <depends on what type, recommended is either btrfs or zfs, see https://linuxcontainers.org/incus/docs/main/explanation/storage/>`
 - Install distrobuilder, see https://linuxcontainers.org/distrobuilder/docs/latest/howto/install/
 - Clone this repo: `git clone https://github.com/MohrJonas/citadel`
-- Run the install script: `sudo ./citadel/install`
+- Run the install script: `./citadel/install`
