@@ -1,0 +1,10 @@
+[Unit]
+Description=Upgrade system via dnf
+
+[Timer]
+Unit=upgrade-system.service
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=multi-user.target

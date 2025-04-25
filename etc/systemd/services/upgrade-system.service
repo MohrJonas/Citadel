@@ -1,0 +1,11 @@
+[Unit]
+Description=Upgrade system via dnf
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=upgrade-system
+
+[Install]
+WantedBy=multi-user.target

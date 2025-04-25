@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+dnf upgrade -y
+dnf autoremove -y

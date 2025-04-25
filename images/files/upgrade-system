@@ -12,7 +12,6 @@ def update_apt():
     run(["apt-get", "autoremove", "-y"], check=True)
 
 def update_dnf():
-    run(["dnf", "update", "-y"], check=True)
     run(["dnf", "upgrade", "-y"], check=True)
     run(["dnf", "autoremove", "-y"], check=True)
 

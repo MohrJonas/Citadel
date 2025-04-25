@@ -65,6 +65,10 @@ sudo cp -v etc/bin/create-container /sbin/create-container
 sudo chown -v root:root /sbin/create-container
 sudo chmod -v 755 /sbin/create-container
  
+sudo cp -v etc/bin/upgrade-system /sbin/upgrade-system
+sudo chown -v root:root /sbin/upgrade-system
+sudo chmod -v 755 /sbin/upgrade-system
+
 # Systemd
 sudo cp -v etc/systemd/services/sync-desktop.service /etc/systemd/system/sync-desktop.service
 sudo chown -v root:root /etc/systemd/system/sync-desktop.service
@@ -74,6 +78,10 @@ sudo cp -v etc/systemd/services/upgrade-containers.service /etc/systemd/system/u
 sudo chown -v root:root /etc/systemd/system/upgrade-containers.service
 sudo chmod -v 644 /etc/systemd/system/upgrade-containers.service
  
+sudo cp -v etc/systemd/services/upgrade-system.service /etc/systemd/system/upgrade-system.service
+sudo chown -v root:root /etc/systemd/system/upgrade-system.service
+sudo chmod -v 644 /etc/systemd/system/upgrade-system.service
+
 sudo cp -v etc/systemd/timers/sync-desktop.timer /etc/systemd/system/sync-desktop.timer
 sudo chown -v root:root /etc/systemd/system/sync-desktop.timer
 sudo chmod -v 644 /etc/systemd/system/sync-desktop.timer
@@ -82,7 +90,12 @@ sudo cp -v etc/systemd/timers/upgrade-containers.timer /etc/systemd/system/upgra
 sudo chown -v root:root /etc/systemd/system/upgrade-containers.timer
 sudo chmod -v 644 /etc/systemd/system/upgrade-containers.timer
  
+sudo cp -v etc/systemd/timers/upgrade-system.timer /etc/systemd/system/upgrade-system.timer
+sudo chown -v root:root /etc/systemd/system/upgrade-system.timer
+sudo chmod -v 644 /etc/systemd/system/upgrade-system.timer
+
 sudo systemctl enable --now upgrade-containers.timer
+sudo systemctl enable --now upgrade-system.timer
 sudo systemctl enable --now sync-desktop.timer
 
 # Autostart entries
