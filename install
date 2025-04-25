@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# Install script to install citadel on your system
+
+
+set -eux
+
+mkdir -p /etc/citadel
+chmod -v 755 /etc/citadel
+
+# Log dir
+mkdir -pv /var/log/citadel
+chown -v root:root /var/log/citadel
+chmod -v 777 /var/log/citadel
+
+# Images
+mkdir -pv /etc/citadel/images
+chmod -v 755 /etc/citadel/images
+cp -vr images/* /etc/citadel/images
+chown -Rv root:root /etc/citadel/images/*
+chmod -Rv 644 /etc/citadel/images/definitions/*
+chmod -Rv 644 /etc/citadel/images/files/*
+chmod -v 755 /etc/citadel/images/definitions
+chmod -v 755 /etc/citadel/images/files
+
+# Profiles
+mkdir -pv /etc/citadel/profiles
+chmod -v 755 /etc/citadel/profiles
+cp -v profiles/* /etc/citadel/profiles
+chown -v root:root /etc/citadel/profiles/*
+chmod -v 644 /etc/citadel/profiles/*
+
+# Autostart
+mkdir -pv $HOME/.config/autostart
+cp -v etc/autostart/* $HOME/.config/autostart
+
+# Python lib
+cp -vr libcitadel/citadel /usr/lib64/python3.13/site-packages
+
+# Bins
+cp -v etc/bin/build-images /sbin/build-images
+chown -v root:root /sbin/build-images
+chmod -v 755 /sbin/build-images
+
+cp -v etc/bin/cookiepatch /sbin/cookiepatch
+chown -v root:root /sbin/cookiepatch
+chmod -v 755 /sbin/cookiepatch
+
+cp etc/bin/import-profiles /sbin/import-profiles
+chown root:root /sbin/import-profiles
+chmod 755 /sbin/import-profiles
+
+cp -v etc/bin/run-container /sbin/run-container
+chown -v root:root /sbin/run-container
+chmod -v 755 /sbin/run-container
+
+cp -v etc/bin/sync-desktop /sbin/sync-desktop
+chown -v root:root /sbin/sync-desktop
+chmod -v 755 /sbin/sync-desktop
+
+cp -v etc/bin/upgrade-containers /sbin/upgrade-containers
+chown -v root:root /sbin/upgrade-containers
+chmod -v 755 /sbin/upgrade-containers
+
+cp -v etc/bin/create-container /sbin/create-container
+chown -v root:root /sbin/create-container
+chmod -v 755 /sbin/create-container
+
+# Systemd
+cp -v etc/systemd/services/sync-desktop.service /etc/systemd/system/sync-desktop.service
+chown -v root:root /etc/systemd/system/sync-desktop.service
+chmod -v 644 /etc/systemd/system/sync-desktop.service
+
+cp -v etc/systemd/services/upgrade-containers.service /etc/systemd/system/upgrade-containers.service
+chown -v root:root /etc/systemd/system/upgrade-containers.service
+chmod -v 644 /etc/systemd/system/upgrade-containers.service
+
+cp -v etc/systemd/timers/sync-desktop.timer /etc/systemd/system/sync-desktop.timer
+chown -v root:root /etc/systemd/system/sync-desktop.timer
+chmod -v 644 /etc/systemd/system/sync-desktop.timer
+
+cp -v etc/systemd/timers/upgrade-containers.timer /etc/systemd/system/upgrade-containers.timer
+chown -v root:root /etc/systemd/system/upgrade-containers.timer
+chmod -v 644 /etc/systemd/system/upgrade-containers.timer
+
+systemctl enable --now upgrade-containers.timer
+systemctl enable --now sync-desktop.timer
+
+import-profiles
+build-images
+
+echo "Done. Please make sure to initialize a incus storage pool with name citadel."

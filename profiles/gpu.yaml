@@ -1,0 +1,8 @@
+name: gpu
+description: "Make the host's gpu (renderD128) available in the container"
+devices:
+  gpu:
+    source: /dev/dri/renderD128
+    path: /host/dev/dri/renderD128
+    type: disk
+    readonly: true

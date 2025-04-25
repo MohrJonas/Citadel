@@ -1,0 +1,10 @@
+[Unit]
+Description=Synchronize desktop files
+
+[Timer]
+Unit=sync-desktop.service
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=multi-user.target

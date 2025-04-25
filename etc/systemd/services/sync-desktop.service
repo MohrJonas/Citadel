@@ -1,0 +1,11 @@
+[Unit]
+Description=Synchronize desktop files
+After=incus.service
+Requires=incus.service
+
+[Service]
+Type=oneshot
+ExecStart=sync-desktop
+
+[Install]
+WantedBy=multi-user.target

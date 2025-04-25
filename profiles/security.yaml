@@ -1,0 +1,7 @@
+name: security
+description: "Extended container security settings"
+config:
+  security.idmap.isolated: true
+  security.guestapi: false
+  security.nesting: false
+  security.privileged: false

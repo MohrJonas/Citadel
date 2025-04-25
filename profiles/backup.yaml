@@ -1,0 +1,5 @@
+name: backup
+description: "Enable daily container backups"
+config:
+  snapshots.schedule.stopped: true
+  snapshots.schedule: "0 19 * * *"

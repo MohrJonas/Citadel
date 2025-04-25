@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+# Path the x11 auth cookie to allow for connections from inside the incus containers
+# See https://stackoverflow.com/questions/16296753/can-you-run-gui-applications-in-a-linux-docker-container/25280523#25280523
+
+from sys import path
+path.append("/mnt/libcitadel")
+
+from citadel.utils.cookiepatch import patch_cookie
+
+patch_cookie()

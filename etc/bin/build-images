@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+from sys import path
+path.append("/mnt/libcitadel")
+
+from pathlib import Path
+
+from citadel.distrobuilder import build_incus_image
+from citadel.incus.image import import_image
+from citadel.utils.logger import create_logger
+
+from typing import cast
+from os import getuid, getgid, listdir, environ
+from os.path import join
+from pwd import getpwuid
+from grp import getgrgid
+from tempfile import TemporaryDirectory
+
+logger = create_logger("citadel_image_builder")
+
+image_files_folder_path = cast(str, environ.get("INCUS_IMAGES") if environ.get("INCUS_IMAGES") else "/etc/citadel/images/definitions")
+logger.info("Image files directory is %s", image_files_folder_path)
+
+for file in listdir(image_files_folder_path):
+    absolute_path = Path(image_files_folder_path, file)
+    if(absolute_path.suffix != ".yaml"):
+        logger.info("Skipping file %s", absolute_path)
+        continue
+    logger.info("YAML file path is %s", absolute_path)
+    with(TemporaryDirectory() as temp_folder):
+        logger.info("Building image in directory %s", temp_folder)
+        # Not yet possible. See issue https://github.com/lxc/distrobuilder/issues/922
+        build_incus_image(absolute_path.as_posix(), temp_folder, #[
+#            "environment.variables[0]={\"key\":\"user_uid\",\"value\":\"1000\"}", 
+#            f"environment.variables[0]={{\"key\": \"user_uid\", \"value\": \"{getuid()}\"}}", 
+#            f"environment.variables.user_gid.value={getgid()}", 
+#            f"environment.variables.user_name.value={getpwuid(getuid())[0]}", 
+#            f"environment.variables.group_name.value={getgrgid(getgid())[0]}"
+        #]
+        )
+        logger.info("Importing image into incus")
+        image_alias = absolute_path.stem
+        logger.info("Image alias is %s", image_alias)
+        import_image(join(temp_folder, "incus.tar.xz"), join(temp_folder, "rootfs.squashfs"), image_alias)

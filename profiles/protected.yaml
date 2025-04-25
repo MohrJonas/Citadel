@@ -1,0 +1,4 @@
+name: protected
+description: "Protect the instance from deletion"
+config:
+  security.protection.delete: true

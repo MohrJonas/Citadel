@@ -1,0 +1,208 @@
+# distrobuilder image definition, adapted from https://github.com/lxc/lxc-ci/blob/main/images/fedora.yaml
+
+image:
+  distribution: fedora
+  release: 42
+
+environment:
+  variables:
+    - key: user_uid
+      value: 1000
+    - key: user_gid
+      value: 1000
+    - key: user_name
+      value: citadel
+    - key: group_name
+      value: citadel
+
+source:
+  downloader: fedora-http
+  url: https://kojipkgs.fedoraproject.org
+
+targets:
+  lxc:
+    create_message: |
+      You just created a {{ image.description }} container.
+    config:
+    - type: all
+      before: 5
+      content: |-
+        lxc.include = LXC_TEMPLATE_CONFIG/fedora.common.conf
+
+    - type: user
+      before: 5
+      content: |-
+        lxc.include = LXC_TEMPLATE_CONFIG/fedora.userns.conf
+
+    - type: all
+      after: 4
+      content: |-
+        lxc.include = LXC_TEMPLATE_CONFIG/common.conf
+
+    - type: user
+      after: 4
+      content: |-
+        lxc.include = LXC_TEMPLATE_CONFIG/userns.conf
+
+    - type: all
+      content: |-
+        lxc.arch = {{ image.architecture_kernel }}
+
+files:
+- path: /etc/machine-id
+  generator: dump
+  content: uninitialized
+
+- path: /var/lib/dbus/machine-id
+  generator: remove
+
+- path: /etc/fstab
+  generator: dump
+
+- path: /etc/hostname
+  generator: hostname
+
+- path: /etc/hosts
+  generator: hosts
+
+- name: eth0.network
+  path: /etc/systemd/network/eth0.network
+  generator: dump
+  content: |-
+    [Match]
+    Name=eth0
+
+    [Network]
+    DHCP=ipv4
+
+    [DHCP]
+    ClientIdentifier=mac
+
+- name: enp5s0.network
+  path: /etc/systemd/network/enp5s0.network
+  generator: dump
+  content: |-
+    [Match]
+    Name=enp5s0
+
+    [Network]
+    DHCP=ipv4
+
+    [DHCP]
+    ClientIdentifier=mac
+
+- path: /sbin/entrypoint
+  generator: copy
+  source: ../files/entrypoint
+  mode: 0755
+  uid: 0
+  gid: 0
+
+- path: /sbin/upgrade-system
+  generator: copy
+  source: ../files/upgrade-system
+  mode: 0755
+  uid: 0
+  gid: 0
+
+- path: /etc/sudoers.d/citadel
+  generator: copy
+  source: ../files/citadel
+  mode: 440
+  uid: 0
+  gid: 0
+
+packages:
+  manager: dnf
+  update: true
+  cleanup: true
+  sets:
+  - packages:
+    - cpio
+    - file
+    - findutils
+    - fipscheck
+    - gettext
+    - glibc-all-langpacks
+    - hardlink
+    - hostname
+    - ipcalc
+    - iproute
+    - iproute-tc
+    - iputils
+    - kbd
+    - kmod
+    - openssh-clients
+    - passwd
+    - pigz
+    - policycoreutils
+    - procps-ng
+    - sudo
+    - systemd-udev
+    - which
+    - xz
+    - python3-psutil
+    action: install
+
+  - packages:
+    - libsss_idmap
+    - libsss_nss_idmap
+    - sssd-client
+    action: remove
+
+actions:
+- trigger: post-unpack
+  action: |-
+    #!/bin/sh
+
+    set -eux
+
+    # Increase connection timeout
+    echo timeout=60 >> /etc/dnf/dnf.conf
+
+    # Let dnf find the fastest mirror
+    echo fastestmirror=True >> /etc/dnf/dnf.conf
+
+    # Backup all repo files
+    for repo in $(ls /etc/yum.repos.d/*.repo); do
+      cp "${repo}" "${repo}.bak"
+    done
+
+- trigger: post-packages
+  action: |-
+    #!/bin/sh
+    umount -l /etc/resolv.conf || true
+    rm /etc/resolv.conf
+    ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+    cp -R /etc/skel/.bash* /root/
+
+    systemctl enable systemd-resolved
+    systemctl enable systemd-networkd
+
+    # Avoid being reset on reboot
+    rm -Rf /etc/systemd/system-preset
+    mkdir -p /etc/systemd/system-preset
+    for file in /usr/lib/systemd/system-preset/*; do
+        NAME=$(basename ${file})
+        ln -s /dev/null /etc/systemd/system-preset/${NAME}
+    done
+
+- trigger: post-files
+  action: |-
+    #!/bin/sh
+    set -eux
+
+    # Restore repos
+    for repo in $(ls /etc/yum.repos.d/*.bak); do
+      mv "${repo}" ${repo%.*}
+    done
+
+- trigger: post-packages
+  action: |-
+    #!/bin/sh
+
+    set -eux
+
+    getent group sudo >/dev/null 2>&1 || groupadd --system sudo
+    groupadd -g $user_gid $group_name
+    useradd -m -u $user_uid -g $user_gid -G sudo $user_name

@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+# Upgrade all containers, starting and stopping them as needed. This is typically called via systemd service and timer
+
+from sys import path
+path.append("/mnt/libcitadel")
+
+from citadel.desktop.notify import show_desktop_notification
+from citadel.incus.containers import get_containers, start_container, stop_container, run_in_container
+
+for container in get_containers():
+    try:
+        print(f"Container state is {container.state}")
+        if container.state != "Running":
+            print(f"Starting container {container.name}")
+            start_container(container.name)
+        print(f"Upgrading container {container.name}")
+        show_desktop_notification("Citadel", body = f"Upgrading container {container.name}")
+        run_in_container(container.name, ["/sbin/upgrade-system"])
+        show_desktop_notification("Citadel", body = f"Done upgrading container {container.name}")
+        if container.state != "Running":
+            print(f"Stopping container {container.name}")
+            stop_container(container.name)
+    except Exception as e:
+        print(f"Error upgrading container: {e}")

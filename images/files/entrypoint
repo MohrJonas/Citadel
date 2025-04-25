@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+# Entrypoint invoked from the host via incus exec and run-container. This creates the required XDG_RUNTIME_DIR, start a user dbus and symlinks all files passed through from the host
+# Usage: entrypoint <uid> <command> [args]
+
+from os import path, symlink, walk, makedirs, chown, environ, chmod
+from subprocess import run
+from sys import exit, argv
+from shutil import which
+from typing import cast
+from psutil import process_iter
+from subprocess import run
+
+def is_subpath_of(first: str, second: str) -> bool:
+    first_path = path.abspath(first)
+    second_path = path.abspath(second)
+    return path.commonpath([first_path]) == path.commonpath([first_path, second_path])
+
+def is_xdg_runtime_dir(path: str) -> bool:
+    return is_subpath_of(cast(str, environ.get("XDG_RUNTIME_DIR")), path)
+
+def get_uid_from_xdg_runtime_dir() -> int:
+    return int(path.basename(cast(str, environ.get("XDG_RUNTIME_DIR"))))
+
+def resolve_path(src_path: str) -> str:
+    path_fragments = list(filter(None, src_path.split(path.sep)))
+    return f"{path.sep}{str.join(path.sep, path_fragments[1:])}"
+
+def mksymlink(src_path: str) -> None:
+    resolved_path = resolve_path(src_path)
+    print(f"{src_path} --> {resolved_path}")
+    parent_directory = path.dirname(resolved_path)
+    if(not path.isdir(parent_directory)):
+        print(f"Creating parent directory {parent_directory}")
+        if(is_xdg_runtime_dir(parent_directory)):
+            print("Path is XDG_RUNTIME_DIR")
+            makedirs(parent_directory, mode=0o700, exist_ok=True)
+            chown(parent_directory, get_uid_from_xdg_runtime_dir(), get_uid_from_xdg_runtime_dir())
+        else:
+            print("Path is not XDG_RUNTIME_DIR")
+            makedirs(parent_directory, mode=0o777, exist_ok=True)
+    if(path.exists(resolved_path)):
+        print(f"Symlink target {resolved_path} already exists. Skipping")
+    else:
+        symlink(src_path, resolved_path)
+
+def mkabs(executable):
+    if(path.isabs(executable)):
+        return executable
+    abs_executable = which(executable) 
+    if abs_executable is not None:
+        return abs_executable 
+    raise RuntimeError(f"Unable to convert executable {executable} to abolute path")
+
+if(not path.isdir("/host")):
+    print("/host either does not exist or is not a directory")
+    exit(1)
+
+if environ.get("XDG_RUNTIME_DIR") is None:
+    print("XDG_RUNTIME_DIR is not set")
+    exit(1)
+
+if environ.get("DBUS_SESSION_BUS_ADDRESS") is None:
+    print("DBUS_SESSION_BUS_ADDRESS is not set")
+    exit(1)
+
+if(path.isdir(cast(str, environ.get("XDG_RUNTIME_DIR")))):
+    print("XDG_RUNTIME_DIR already exists. Skipping")
+else:
+    print("Creating XDG_RUNTIME_DIR")
+    makedirs(cast(str, environ.get("XDG_RUNTIME_DIR")), mode=0o700)
+    print(f"Mounting tmpfs on {environ.get('XDG_RUNTIME_DIR')}")
+    run(["mount", "-t", "tmpfs", "tmpfs", cast(str, environ.get("XDG_RUNTIME_DIR"))], check=True)
+    chown(cast(str, environ.get("XDG_RUNTIME_DIR")), get_uid_from_xdg_runtime_dir(), get_uid_from_xdg_runtime_dir())
+    chmod(cast(str, environ.get("XDG_RUNTIME_DIR")), 0o700)
+    print("Done")
+
+if next(filter(lambda process: process.uids()[0] == int(path.basename(cast(str, environ.get("XDG_RUNTIME_DIR")))) and (f"--address={cast(str, environ.get('DBUS_SESSION_BUS_ADDRESS'))}" in process.cmdline()), process_iter()), None) is not None:
+    print("user dbus already running. Skipping")
+else:
+    print("Starting user dbus")
+    run(["dbus-daemon", "--session", "--print-address", "--fork", f"--address={environ.get('DBUS_SESSION_BUS_ADDRESS')}"], check=True, user=get_uid_from_xdg_runtime_dir())
+    print("Started dbus")
+
+for root, dirnames, fnames in walk("/host"):
+    full_paths = [path.join(root, fname) for fname in fnames]
+    for full_path in full_paths:
+        mksymlink(full_path)
+
+print("Goodbye from entrypoint")
+
+if(len(argv) == 1):
+    print("No command passed, exiting")
+    exit(0)
+
+run_as = int(argv[1])
+executable = mkabs(argv[2])
+run([executable, *argv[3:]], user=run_as)

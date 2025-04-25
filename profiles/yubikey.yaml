@@ -1,0 +1,13 @@
+name: yubikey
+description: Hotplug Yubikey 5 nfc passthrough
+config: {}
+devices:
+  yubikey:
+    gid: ${user_gid}
+    productid: "0407"
+    required: "false"
+    type: unix-hotplug
+    uid: ${user_uid}
+    vendorid: "1050"
+used_by: []
+project: default

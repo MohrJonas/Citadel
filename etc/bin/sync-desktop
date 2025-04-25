@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+# Sync the desktop files from inside the containers to the local desktop, patching them as neccessary. This is typically called via systemd service and timer
+
+from sys import path
+path.append("/mnt/libcitadel")
+
+from os import linesep, makedirs, symlink
+from os.path import basename, isabs, join, exists, splitext
+from pathlib import Path
+from configparser import RawConfigParser
+from io import StringIO
+from itertools import chain
+from typing import Optional, cast
+
+from citadel.utils.logger import create_logger
+from citadel.desktop.notify import show_desktop_notification
+from citadel.incus.containers import Container, get_containers, list_files_in_directory, get_file_content, start_container, stop_container, get_file_content_binary, run_in_container_capturing, is_path_directory
+from citadel.desktop.icon import color_icon
+
+logger = create_logger("citadel_desktop_sync")
+
+def get_applications_folder_path_for_container(container_name: str) -> str:
+    return Path("/usr/share/citadel/exports/applications").joinpath(container_name).as_posix()
+
+def get_icon_folder_path_for_container(container_name: str) -> str:
+    return Path("/usr/share/citadel/exports/icons").joinpath(container_name).as_posix()
+
+def get_color_for_container(container_name: str) -> tuple[int, int, int]:
+    containers = get_containers()
+    container = cast(Container, list(filter(lambda container: container.name == container_name, containers))[0])
+    config_property = cast(str, container.raw["config"]["user.citadel.color"])
+    color_parts = config_property.split(",")
+    return (int(color_parts[0]), int(color_parts[1]), int(color_parts[2]))
+
+def get_file_names_for_icon_name(icon_name: str) -> list[str]:
+    return [
+        f"{icon_name}.png",
+        f"{icon_name}.jpg",
+        f"{icon_name}.jpeg",
+        f"{icon_name}.xmp"
+    ]
+
+def get_file_paths_for_icon_name(parent_path: str, icon_name: str) -> list[str]:
+    return list(map(lambda file_name: join(parent_path, file_name), get_file_names_for_icon_name(icon_name)))
+
+def get_potential_hicolor_icon_paths(theme_index: RawConfigParser, icon_name: str) -> list[str]:
+    theme_directory_names = theme_index["Icon Theme"]["Directories"].split(",")
+    theme_directory_names = sorted(theme_directory_names, key=lambda name: int(theme_index[name]["Size"]), reverse=True)
+    theme_directory_paths = map(lambda directory_name: join("/usr/share/icons/hicolor", directory_name, "apps"), theme_directory_names)
+    return list(chain(*map(lambda directory_path: get_file_paths_for_icon_name(directory_path, icon_name), theme_directory_paths)))
+
+def get_icon_path_from_hicolor(icon_name: str, container_name: str) -> Optional[str]:
+    #if not is_path_file(container_name, "/usr/share/icons/hicolor/index.theme"):
+    #    return None
+    #index_theme_contents = get_file_content(container_name, "/usr/share/icons/hicolor/index.theme")
+    #index_theme = RawConfigParser()
+    #index_theme.read_string(index_theme_contents)
+
+    #for icon_path in get_potential_hicolor_icon_paths(index_theme, icon_name):
+    #    if not is_path_file(container_name, icon_path):
+    #        continue
+    #    return icon_path
+    find_output = run_in_container_capturing(container_name, ["find", "/usr/share/icons/hicolor", "-type", "f", "-name", f"{icon_name}.*"])
+    if len(find_output) == 0:
+        return None
+    find_lines = find_output.split(linesep)
+    return find_lines[0] if len(find_lines) > 0 else None
+
+def get_icon_path(container_name: str, icon_name: str) -> Optional[str]:
+    if isabs(icon_name):
+        logger.info("Original icon path (%s) is already absolute. Done", icon_name)
+        return icon_name
+    logger.info("Searching for icon in hicolor theme")
+    return get_icon_path_from_hicolor(icon_name, container_name)
+
+def copy_patched_icon_to_host(container_name: str, icon_path: str) -> str:
+    icon_bytes = get_file_content_binary(container_name, icon_path)
+    icon_bytes = color_icon(icon_bytes, get_color_for_container(container_name))
+    host_path = join(get_icon_folder_path_for_container(container_name), basename(icon_path))
+    with open(host_path, "wb") as file:
+        file.write(icon_bytes)
+    return host_path
+
+def replace_file_ending(path: str, new_extension: str) -> str:
+    return f"{splitext(path)[0]}{new_extension}"
+
+def patch_desktop_file(desktop_file: RawConfigParser, container_name: str, icon_path: Optional[str], uid: int) -> RawConfigParser:
+    for section_name in desktop_file.sections():
+        desktop_file.remove_option(section_name, "TryExec")
+        if "Exec" in desktop_file[section_name].keys():
+            desktop_file[section_name]["Exec"] = f"run-container {container_name} {uid} {desktop_file[section_name]["Exec"]}"
+        if "Name" in desktop_file[section_name].keys():
+            desktop_file[section_name]["Name"] = f"{desktop_file[section_name]['Name']} on {container_name}"
+        if "Icon" in desktop_file[section_name].keys():
+            if icon_path is None:
+                desktop_file.remove_option(section_name, "Icon")
+            else:
+                desktop_file[section_name]["Icon"] = replace_file_ending(icon_path, ".png")
+    return desktop_file
+
+def parse_desktop_file(file_contents: str) -> RawConfigParser:
+    index_theme = RawConfigParser()
+    index_theme.optionxform = str
+    index_theme.read_string(file_contents)
+    return index_theme
+
+def stringify_desktop_file(desktop_file: RawConfigParser) -> str:
+    stringIO = StringIO()
+    desktop_file.write(stringIO, space_around_delimiters=False)
+    return stringIO.getvalue()
+
+def sync_desktop_entries(container_name: str) -> None:
+    applications_folder_path = get_applications_folder_path_for_container(container_name)
+    icons_folder_path = get_icon_folder_path_for_container(container_name)
+    makedirs(applications_folder_path, exist_ok=True)
+    makedirs(icons_folder_path, exist_ok=True)
+    for container_desktop_folder_path in ["/usr/share/applications", "/home/citadel/.local/share/applications", "/var/lib/flatpak/exports/share/applications", "/home/citadel/.local/share/flatpak/exports/share/applications"]:
+        if not is_path_directory(container_name, container_desktop_folder_path):
+            logger.info("Skipping application search directory %s since it does not exist", container_desktop_folder_path)            
+            continue
+        for container_desktop_file_path in list_files_in_directory(container_name, container_desktop_folder_path):
+            if splitext(container_desktop_file_path)[1] != ".desktop":
+                continue
+            logger.info("Synchronizing %s", container_desktop_file_path)
+            host_desktop_file_path = join(applications_folder_path, basename(container_desktop_file_path))
+        
+            if(exists(host_desktop_file_path)):
+                logger.info("Skipping %s, since it is already exists", container_desktop_file_path)
+                continue
+        
+            desktop_file_contents = get_file_content(container_name, container_desktop_file_path)
+            desktop_file = parse_desktop_file(desktop_file_contents)
+
+            if "Icon" in desktop_file["Desktop Entry"].keys():
+                container_icon_path = get_icon_path(container_name, desktop_file["Desktop Entry"]["Icon"])
+                if container_icon_path is not None:
+                    host_icon_file_path = replace_file_ending(join(get_icon_folder_path_for_container(container_name), basename(container_icon_path)), ".png")
+                    try:
+                        copy_patched_icon_to_host(container_name, container_icon_path)
+                        desktop_file = patch_desktop_file(desktop_file, container_name, host_icon_file_path, 1000)
+                    except ValueError:
+                        desktop_file = patch_desktop_file(desktop_file, container_name, None, 1000)
+                else:
+                    desktop_file = patch_desktop_file(desktop_file, container_name, None, 1000)
+            else:
+                desktop_file = patch_desktop_file(desktop_file, container_name, None, 1000)
+    
+            logger.info("Writing patched desktop file to host filesystem")
+            with open(host_desktop_file_path, "w") as file:
+                file.write(stringify_desktop_file(desktop_file))
+
+            logger.info("Symlinking desktop file")
+            symlink(host_desktop_file_path, join("/usr/share/applications", f"{container_name}@{basename(host_desktop_file_path)}"))
+
+show_desktop_notification("Citadel", "Synchronizing desktop entries")
+
+containers = get_containers()
+
+for container in containers:
+    logger.info("Syncing desktop entries for container %s", container.name)
+    if(container.state != "Running"):
+        start_container(container.name)
+    sync_desktop_entries(container.name)
+    if(container.state != "Running"):
+        stop_container(container.name)
+
+show_desktop_notification("Citadel", "Synchronizing complete")
+logger.info("Sync completed")

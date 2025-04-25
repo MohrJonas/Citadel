@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+
+# DEPRECATED AND NOT USED
+
+from os.path import join, exists
+from os import environ, kill
+from signal import SIGTERM
+from typing import cast
+
+if not exists(join("/tmp", cast(str, environ.get("LXC_NAME")))):
+    print("Pid file does not exist")
+    exit(0)
+
+# Read nxagent pid and stop it
+with open(join("/tmp", cast(str, environ.get("LXC_NAME"))), "r") as file:
+    pid = int(file.readline())
+    kill(pid, SIGTERM)

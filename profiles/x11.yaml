@@ -1,0 +1,18 @@
+name: x11
+description: "Make the host's x11 socket available in the container"
+config:
+  environment.DISPLAY: :0.0
+  environment.XAUTHORITY: /mnt/xauthority
+devices:
+  x11-socket:
+    source: /tmp/.X11-unix/X0
+    path: /host/tmp/.X11-unix/X0
+    type: disk
+    shift: true
+    readonly: true
+  xauthority-file:
+    source: /run/lightdm/${user_name}/xauthority
+    path: /host/mnt/xauthority
+    shift: true
+    type: disk
+    readonly: true

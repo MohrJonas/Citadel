@@ -1,0 +1,11 @@
+[Unit]
+Description=Upgrade all containers
+After=incus.service
+Requires=incus.service
+
+[Service]
+Type=oneshot
+ExecStart=upgrade-containers
+
+[Install]
+WantedBy=multi-user.target

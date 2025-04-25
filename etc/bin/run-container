@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+# Run command in container, starting the container and other  required services as necceassary
+# Usage: run-container container-name uid command [args]
+
+from sys import path, argv
+path.append("/mnt/libcitadel")
+
+from citadel.incus.containers import get_containers, start_container, Container, run_in_container
+
+from random import randint
+from typing import cast, Optional
+from subprocess import Popen, run
+from os.path import  join
+
+if len(argv) < 4:
+    raise RuntimeError("Invalid usage")
+
+containers = get_containers()
+container = cast(Optional[Container], next(filter(lambda container: container.name == argv[1], containers), None))
+
+if container is None:
+    raise RuntimeError(f"Cannot find container {argv[1]}")
+
+if container.state != "Running":
+    if "nxagent" in container.profiles:
+        # For now we just use a random number and hope it is not used yet
+        display_number = randint(2, 2147483647)
+        display_name = f":{display_number}"
+        socket_name = f"X{display_number}"
+        socket_path = join("/tmp/.X11-unix", socket_name)
+        container_socket_path = join("/host/tmp/.X11-unix", socket_name)
+        Popen(["nxagent", "-norootlessexit", "-noreset", "-ac", "-R", "-nolisten", "tcp", display_name])
+        run(["incus", "config", "device", "remove", container.name, "nxagent"])
+        run(["incus", "config", "device", "add", container.name, "nxagent", "disk", f"source={socket_path}", f"path={container_socket_path}", "shift=true"], check=True)
+        run(["incus", "config", "set", container.name, "environment.DISPLAY", display_name], check=True)
+    start_container(container.name)
+
+run_in_container(container.name, ["/sbin/entrypoint", argv[2], *argv[3:]])

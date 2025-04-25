@@ -1,0 +1,10 @@
+[Unit]
+Description=Upgrade all containers
+
+[Timer]
+Unit=upgrade-containers.service
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=multi-user.target

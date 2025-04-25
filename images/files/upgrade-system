@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+# System-agnostic upgrade script
+
+from subprocess import run
+from os import environ
+from shutil import which
+
+def update_apt():
+    environ["DEBIAN_FRONTEND"] = "noninteractive"
+    run(["apt-get", "update", "-y"], check=True)
+    run(["apt-get", "upgrade", "-y"], check=True)
+    run(["apt-get", "autoremove", "-y"], check=True)
+
+def update_dnf():
+    run(["dnf", "update", "-y"], check=True)
+    run(["dnf", "upgrade", "-y"], check=True)
+    run(["dnf", "autoremove", "-y"], check=True)
+
+def update_pacman():
+    run(["pacman", "-Syuu", "--noconfirm"], check=True)
+
+if __name__ == "__main__":
+    if which("apt") is not None:
+        update_apt()
+    if which("dnf") is not None:
+        update_dnf()
+    if which("pacman") is not None:
+        update_pacman()

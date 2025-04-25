@@ -1,0 +1,9 @@
+name: pulseaudio
+description: "Make the host's pulseaudio socket available in the container"
+devices:
+  pulseaudio-socket:
+    source: /run/user/${user_uid}/pulse
+    path: /host/run/user/${user_uid}/pulse
+    type: disk
+    shift: true
+    readonly: true

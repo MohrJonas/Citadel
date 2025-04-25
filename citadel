@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+# Currntly unused and does noting
+
+from sys import path
+path.append("/mnt/libcitadel")
+
+from citadel.utils.logger import create_logger
+from citadel.incus.containers import get_containers, create_instance, attach_network, open_shell_in_container
+from citadel.incus.networking import create_network
+
+from argparse import ArgumentParser
+
+logger = create_logger("citadel")
+
+parser = ArgumentParser()

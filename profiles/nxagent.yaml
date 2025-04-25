@@ -1,0 +1,5 @@
+name: nxagent
+description: "Stub profile indicating the usage of nxagent as the x11 server"
+config: {}
+devices: {}
+project: default

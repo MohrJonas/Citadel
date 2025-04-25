@@ -1,0 +1,6 @@
+name: citadel
+description: "Shared citadel environment variables"
+config:
+  environment.HOME: /home/${user_name}
+  environment.XDG_RUNTIME_DIR: /run/user/${user_uid}
+  environment.DBUS_SESSION_BUS_ADDRESS: unix:path=/run/user/${user_uid}/bus

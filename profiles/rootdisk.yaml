@@ -1,0 +1,7 @@
+name: rootdisk
+description: "Root disk for the container, using the citadel pool"
+devices:
+  root:
+    path: /
+    pool: citadel
+    type: disk

@@ -1,0 +1,2 @@
+# Allow for user citadel to run sudo commands without password
+citadel ALL=(ALL:ALL) NOPASSWD:ALL

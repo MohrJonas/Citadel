@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+# Template out the profile templates and create incus profiles from them
+
+from sys import path
+path.append("/mnt/libcitadel")
+
+from string import Template
+from pathlib import Path
+
+from citadel.utils.logger import create_logger
+from citadel.incus.profile import create_profile
+
+from typing import cast
+from os import listdir, environ, getgid, getuid
+from pwd import getpwuid
+from grp import getgrgid
+
+logger = create_logger("citadel_profiles_importer")
+
+if getuid() == 0:
+    raise RuntimeError("Do not run this script as root. Instead run it as the user you are using for regular use")
+
+profile_files_folder_path = cast(str, environ.get("INCUS_PROFILES") if environ.get("INCUS_PROFILES") else "/etc/citadel/profiles")
+logger.info("Profiles files directory is %s", profile_files_folder_path)
+
+for file in listdir(profile_files_folder_path):
+    absolute_path = Path(profile_files_folder_path, file)
+    if(absolute_path.suffix != ".yaml"):
+        logger.info("Skipping file %s", absolute_path)
+        continue
+    logger.info("YAML file path is %s", absolute_path)  
+    with(open(absolute_path) as yaml_file):
+        template_text = yaml_file.read()
+        template = Template(template_text)
+        logger.info("Importing profile %s", absolute_path.stem)
+        uid = getuid()
+        gid = getgid()
+        user_name = getpwuid(uid)[0]
+        group_name = getgrgid(gid)[0]
+        create_profile(absolute_path.stem, template.substitute(user_uid=uid, user_gid=gid, user_name=user_name, group_name=group_name))
