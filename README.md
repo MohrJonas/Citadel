@@ -23,7 +23,7 @@ It is inspired by QubesOS, but makes various changes. These include:
 - Create a new regular user, making sure the user has uid and gid 1000 (Can be selected under advanced)
 - Install the operating system
 
-### After booting into the operating system for the first time
+### After booting into the operating system for the first time:
 
 - Install incus `sudo dnf install incus`
 - Install nx* `sudo dnf install nxagent nxdialog`
