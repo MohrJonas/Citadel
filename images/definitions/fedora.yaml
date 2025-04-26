@@ -142,6 +142,15 @@ packages:
     - which
     - xz
     - python3-psutil
+    - ncurses
+    - dbus-daemon
+    - xfce4-taskmanager
+    - mousepad
+    - thunar
+    - thunar-archive-plugin
+    - ristretto
+    - xfce4-terminal
+    - parole
     action: install
 
   - packages:
