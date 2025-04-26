@@ -1,0 +1,2 @@
+# Allow run running firewall-cmd without password
+citadel ALL = NOPASSWD: /usr/bin/firewall-cmd

@@ -27,9 +27,12 @@ It is inspired by QubesOS, but makes various changes. These include:
 
 - Install incus `sudo dnf install incus`
 - Install nx* `sudo dnf install nxagent nxdialog`
+- Install sshfs `sudo dnf install sshfs`
 - Add your user to the incus-admin group `sudo usermod -aG incus-admin $USER`
+- Get new group without logout: `newgrp incus-admin`
 - Start and enable incus `sudo systemctl enable --now incus.service`
 - Add a subgid and subuid range for the root user `sudo usermod -v 1000000-1000999999 -w 1000000-1000999999 root` 
+- Restart incus `sudo systemctl restart incus.service`
 - Create a new storage called incus that holds the containers `incus storage create citadel <depends on what type, recommended is either btrfs or zfs, see https://linuxcontainers.org/incus/docs/main/explanation/storage/>`
 - Install distrobuilder, see https://linuxcontainers.org/distrobuilder/docs/latest/howto/install/
 - Clone this repo: `git clone https://github.com/MohrJonas/citadel`

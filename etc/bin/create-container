@@ -8,6 +8,7 @@ path.append("/mnt/libcitadel")
 from citadel.utils.logger import create_logger
 from citadel.incus.containers import create_instance, attach_network
 from citadel.incus.networking import create_network
+from citadel.firewall.firewalld import add_interface_to_trusted, reload_firewall
 
 from argparse import ArgumentParser
 from subprocess import run
@@ -35,3 +36,5 @@ create_instance(args.name, args.image, profiles)
 run(["incus", "config", "set", args.name, "user.citadel.color", args.color], check=True)
 create_network(args.name, "bridge")
 attach_network(args.name, args.name)
+add_interface_to_trusted(args.name)
+reload_firewall()

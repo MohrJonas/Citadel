@@ -98,6 +98,15 @@ sudo systemctl enable --now upgrade-containers.timer
 sudo systemctl enable --now upgrade-system.timer
 sudo systemctl enable --now sync-desktop.timer
 
+# Sudo
+sudo mkdir -pv /etc/sudoers.d
+sudo chown -v root:root /etc/sudoers.d
+sudo chmod -v 700 /etc/sudoers.d 
+
+sudo cp -v etc/citadel /etc/sudoers.d/citadel
+sudo chown -v root:root /etc/sudoers.d/citadel
+sudo chmod -v 600 /etc/sudoers.d/citadel
+
 # Autostart entries
 mkdir -pv ~/.config/autostart
 cp -v etc/autostart/* ~/.config/autostart
