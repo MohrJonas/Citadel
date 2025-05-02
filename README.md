@@ -50,6 +50,7 @@ It is inspired by QubesOS, but makes various changes. These include:
     - `sudo mv /tmp/umoci /sbin/umoci`
     - `sudo chown root:root /sbin/umoci`
     - `sudo chmod 755 /sbin/umoci`
+- Remove dnfdragora `sudo dnf remove dnfdragora`
 - Clone this repo: `git clone https://github.com/MohrJonas/citadel`
 - Run the install script: `./citadel/install`
 - Reboot the system
