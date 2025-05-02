@@ -1,6 +1,17 @@
 image:
   distribution: archlinux
 
+environment:
+  variables:
+    - key: user_uid
+      value: 1000
+    - key: user_gid
+      value: 1000
+    - key: user_name
+      value: citadel
+    - key: group_name
+      value: citadel
+
 source:
   downloader: archlinux-http
   url: https://archive.archlinux.org/iso/
