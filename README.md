@@ -47,3 +47,4 @@ It is inspired by QubesOS, but makes various changes. These include:
     - `sudo chmod 755 /sbin/distrobuilder`
 - Clone this repo: `git clone https://github.com/MohrJonas/citadel`
 - Run the install script: `./citadel/install`
+- Reboot the system
