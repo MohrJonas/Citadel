@@ -4,6 +4,12 @@
 
 set -eux
 
+if [ "$EUID" -eq 0 ]; then
+  echo "Do not run this script as root"
+  exit 1
+fi
+
+
 sudo mkdir -p /etc/citadel
 sudo chmod -v 755 /etc/citadel
 
@@ -28,10 +34,6 @@ sudo chmod -v 755 /etc/citadel/profiles
 sudo cp -v profiles/* /etc/citadel/profiles
 sudo chown -v root:root /etc/citadel/profiles/*
 sudo chmod -v 644 /etc/citadel/profiles/*
- 
-# Autostart
-sudo mkdir -pv $HOME/.config/autostart
-sudo cp -v etc/autostart/* $HOME/.config/autostart
  
 # Python lib
 sudo cp -vr libcitadel/citadel /usr/lib64/python3.13/site-packages
