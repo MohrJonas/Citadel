@@ -12,7 +12,7 @@ from io import StringIO
 from typing import Optional, cast
 from tempfile import TemporaryDirectory
 from time import sleep
-from re import match
+from re import match, escape
 
 from citadel.utils.logger import create_logger
 from citadel.desktop.notify import show_desktop_notification
@@ -43,7 +43,7 @@ def get_color_for_container(container_name: str) -> tuple[int, int, int]:
 def get_icon_path_from_hicolor(icon_name: str, root_mount_point: str) -> Optional[str]:
     container_hicolor_path = prepend_to_path("/usr/share/icons/hicolor", root_mount_point)
     find_output = walk_absolute(container_hicolor_path)
-    return next(filter(lambda file_path: isfile(file_path) and match(r"^.*\.(?:png|jpg|jpeg)$", file_path), find_output), None)
+    return next(filter(lambda file_path: isfile(file_path) and match(f"^{escape(icon_name)}\\.(?:png|jpg|jpeg)$", basename(file_path)), find_output), None)
 
 def get_icon_path(root_mount_point: str, icon_name: str) -> Optional[str]:
     if isabs(icon_name):

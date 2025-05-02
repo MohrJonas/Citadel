@@ -2,7 +2,7 @@
 # Run command in container, starting the container as necceassary
 # Usage: run-container container-name uid command [args]
 
-from sys import path, argv, exit
+from sys import path, argv
 path.append("/mnt/libcitadel")
 
 from citadel.incus.containers import get_containers, start_container, Container, run_in_container
