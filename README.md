@@ -28,6 +28,7 @@ It is inspired by QubesOS, but makes various changes. These include:
 - Install incus `sudo dnf install incus`
 - Install nx* `sudo dnf install nxagent nxdialog`
 - Install sshfs `sudo dnf install sshfs`
+- Install tkinter `sudo dnf install python3-tkinter`
 - Add your user to the incus-admin group `sudo usermod -aG incus-admin $USER`
 - Get new group without logout: `newgrp incus-admin`
 - Start and enable incus `sudo systemctl enable --now incus.service`
