@@ -1,5 +1,6 @@
 from PIL.Image import open, merge
 from io import BytesIO
+from typing import cast
 
 def color_icon(image_bytes: bytes, color: tuple[int, int , int]) -> bytes:
     original_image = open(BytesIO(image_bytes)).convert("RGBA")
@@ -8,7 +9,7 @@ def color_icon(image_bytes: bytes, color: tuple[int, int , int]) -> bytes:
     grayscale_image = merge("LA", (grayscale_rgb, a)).convert("RGBA")
     for y in range(grayscale_image.height):
         for x in range(grayscale_image.width):
-            pixel_color = grayscale_image.getpixel((x, y))
+            pixel_color = cast(list[int], grayscale_image.getpixel((x, y)))
             
             if pixel_color[3] > 0:  # Alpha channel
                 new_pixel_color = (

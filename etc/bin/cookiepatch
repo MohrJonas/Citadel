@@ -6,5 +6,10 @@ from sys import path
 path.append("/mnt/libcitadel")
 
 from citadel.utils.cookiepatch import patch_cookie
+from citadel.utils.exception_handler import install_exception_handler
+from citadel.desktop.notify import show_desktop_notification
+
+install_exception_handler()
+show_desktop_notification("Patching xauth cookie")
 
 patch_cookie()

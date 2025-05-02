@@ -6,6 +6,7 @@ from typing import cast
 from time import sleep
 
 from citadel.utils.subprocess import run_json
+from citadel.utils.async_process import run_process_async
 
 class Container:
     def __init__(self, instance_json: Any) -> None:
@@ -70,3 +71,8 @@ def is_path_file(container_name: str, file_path: str) -> bool:
 
 def does_path_exist(container_name: str, file_path: str) -> bool:
     return run_in_container_capturing_exitcode(container_name, ["test", "-e", file_path]) == 0
+
+def mount_container_fs(container_name: str, file_path: str, mount_point: str) -> str:
+    process_name = f"mount_container_fs@{container_name}"
+    run_process_async(process_name, ["incus", "file", "mount", f"{container_name}{file_path}", mount_point])
+    return process_name

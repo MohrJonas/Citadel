@@ -69,6 +69,10 @@ sudo cp -v etc/bin/upgrade-system /sbin/upgrade-system
 sudo chown -v root:root /sbin/upgrade-system
 sudo chmod -v 755 /sbin/upgrade-system
 
+sudo cp -v etc/bin/run-with-display /sbin/run-with-display
+sudo chown -v root:root /sbin/run-with-display
+sudo chmod -v 755 /sbin/run-with-display
+
 # Systemd
 sudo cp -v etc/systemd/services/sync-desktop.service /etc/systemd/system/sync-desktop.service
 sudo chown -v root:root /etc/systemd/system/sync-desktop.service
@@ -106,6 +110,13 @@ sudo chmod -v 700 /etc/sudoers.d
 sudo cp -v etc/citadel /etc/sudoers.d/citadel
 sudo chown -v root:root /etc/sudoers.d/citadel
 sudo chmod -v 600 /etc/sudoers.d/citadel
+
+# Logrotate
+sudo cp -v etc/citadel.conf /etc/logrotate.d/citadel.conf
+sudo chown -v root:root /etc/logrotate.d/citadel.conf
+sudo chmod -v 600 /etc/logrotate.d/citadel.conf
+sudo systemctl restart logrotate.service
+
 
 # Autostart entries
 mkdir -pv ~/.config/autostart
