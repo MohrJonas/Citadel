@@ -45,6 +45,11 @@ It is inspired by QubesOS, but makes various changes. These include:
     - `sudo cp $HOME/go/bin/distrobuilder /sbin/distrobuilder`
     - `sudo chown root:root /sbin/distrobuilder`
     - `sudo chmod 755 /sbin/distrobuilder`
+- Install umoci
+    - `wget https://github.com/opencontainers/umoci/releases/download/v0.4.7/umoci.amd64 -O /tmp/umoci`
+    - `sudo mv /tmp/umoci /sbin/umoci`
+    - `sudo chown root:root /sbin/umoci`
+    - `sudo chmod 755 /sbin/umoci`
 - Clone this repo: `git clone https://github.com/MohrJonas/citadel`
 - Run the install script: `./citadel/install`
 - Reboot the system
