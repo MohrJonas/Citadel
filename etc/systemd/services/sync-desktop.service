@@ -5,7 +5,7 @@ Requires=incus.service
 
 [Service]
 Type=oneshot
-ExecStart=sync-desktop
+ExecStart=run-with-display sync-desktop
 
 [Install]
 WantedBy=multi-user.target

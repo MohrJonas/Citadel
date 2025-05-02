@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+
+from citadel.utils.exception_handler import install_exception_handler
+
+install_exception_handler()
+
+raise RuntimeError("foo")

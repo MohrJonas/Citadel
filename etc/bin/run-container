@@ -1,38 +1,62 @@
 #!/usr/bin/env python3
-# Run command in container, starting the container and other  required services as necceassary
+# Run command in container, starting the container as necceassary
 # Usage: run-container container-name uid command [args]
 
-from sys import path, argv
+from sys import path, argv, exit
 path.append("/mnt/libcitadel")
 
 from citadel.incus.containers import get_containers, start_container, Container, run_in_container
+from citadel.utils.exception_handler import install_exception_handler
+from citadel.desktop.notify import show_desktop_notification
+from citadel.utils.logger import create_logger
 
 from random import randint
 from typing import cast, Optional
 from subprocess import Popen, run
 from os.path import  join
 
+install_exception_handler()
+
+logger = create_logger("run-container")
+
 if len(argv) < 4:
+    logger.critical("Wrong number of arguments, expected >= 4, got %s", len(argv))
     raise RuntimeError("Invalid usage")
 
+logger.info("Fetching containers")
 containers = get_containers()
 container = cast(Optional[Container], next(filter(lambda container: container.name == argv[1], containers), None))
+logger.info("Container is %s", container)
 
 if container is None:
+    logger.critical("Unable to find container")
     raise RuntimeError(f"Cannot find container {argv[1]}")
 
 if container.state != "Running":
+    logger.info("Container is not yet running, starting")
     if "nxagent" in container.profiles:
+        logger.info("NXAgent enabled, performing setup routine")
         # For now we just use a random number and hope it is not used yet
         display_number = randint(2, 2147483647)
+        logger.info("Display number is %s", display_number)
         display_name = f":{display_number}"
+        logger.info("Display name is %s", display_name)
         socket_name = f"X{display_number}"
+        logger.info("Socket name is %s", socket_name)
         socket_path = join("/tmp/.X11-unix", socket_name)
+        logger.info("Socket path is %s", socket_path)
         container_socket_path = join("/host/tmp/.X11-unix", socket_name)
+        logger.info("Container socket path is %s", container_socket_path)
+        logger.info("Starting nxagent process in the background")
         Popen(["nxagent", "-norootlessexit", "-noreset", "-ac", "-R", "-nolisten", "tcp", display_name])
+        logger.info("Removing nxagent device, if existant")
         run(["incus", "config", "device", "remove", container.name, "nxagent"])
+        logger.info("Adding nxagent socket device")
         run(["incus", "config", "device", "add", container.name, "nxagent", "disk", f"source={socket_path}", f"path={container_socket_path}", "shift=true"], check=True)
+        logger.info("Setting DISPLAY of container accordingly")
         run(["incus", "config", "set", container.name, "environment.DISPLAY", display_name], check=True)
+    show_desktop_notification(f"Starting container {container.name}")
     start_container(container.name)
 
+logger.info("Running /sbin/entrypoint with command %s and args %s", argv[2], argv[3:])
 run_in_container(container.name, ["/sbin/entrypoint", argv[2], *argv[3:]])

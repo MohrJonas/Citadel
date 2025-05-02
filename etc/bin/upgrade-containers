@@ -6,19 +6,24 @@ path.append("/mnt/libcitadel")
 
 from citadel.desktop.notify import show_desktop_notification
 from citadel.incus.containers import get_containers, start_container, stop_container, run_in_container
+from citadel.utils.logger import create_logger
+
+logger = create_logger("citadel_upgrade_containers")
 
 for container in get_containers():
     try:
-        print(f"Container state is {container.state}")
+        logger.info("Container state is %s", container.state)
         if container.state != "Running":
-            print(f"Starting container {container.name}")
+            logger.info("Starting container %s", container.name)
+            show_desktop_notification(f"Starting container {container.name}")
             start_container(container.name)
-        print(f"Upgrading container {container.name}")
-        show_desktop_notification("Citadel", body = f"Upgrading container {container.name}")
+        logger.info("Upgrading container %s", container.name)
+        show_desktop_notification("Citadel", f"Upgrading container {container.name}")
         run_in_container(container.name, ["/sbin/upgrade-system"])
-        show_desktop_notification("Citadel", body = f"Done upgrading container {container.name}")
+        show_desktop_notification("Citadel", f"Done upgrading container {container.name}")
         if container.state != "Running":
-            print(f"Stopping container {container.name}")
+            logger.info("Stopping container %s", container.name)
+            show_desktop_notification(f"Stopping container {container.name}")
             stop_container(container.name)
     except Exception as e:
-        print(f"Error upgrading container: {e}")
+        logger.critical("Error upgrading container: %s", e)

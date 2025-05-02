@@ -5,7 +5,7 @@ Requires=incus.service
 
 [Service]
 Type=oneshot
-ExecStart=upgrade-containers
+ExecStart=run-with-display upgrade-containers
 
 [Install]
 WantedBy=multi-user.target
