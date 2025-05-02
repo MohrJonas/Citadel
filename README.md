@@ -34,6 +34,15 @@ It is inspired by QubesOS, but makes various changes. These include:
 - Add a subgid and subuid range for the root user `sudo usermod -v 1000000-1000999999 -w 1000000-1000999999 root` 
 - Restart incus `sudo systemctl restart incus.service`
 - Create a new storage called incus that holds the containers `incus storage create citadel <depends on what type, recommended is either btrfs or zfs, see https://linuxcontainers.org/incus/docs/main/explanation/storage/>`
-- Install distrobuilder, see https://linuxcontainers.org/distrobuilder/docs/latest/howto/install/
+- Install distrobuilder, see https://linuxcontainers.org/distrobuilder/docs/latest/howto/install:
+    - `sudo dnf install golang gcc debootstrap rsync gnupg2 squashfs-tools git make hivex genisoimage`
+    - `mkdir -p $HOME/go/src/github.com/lxc/`
+    - `cd $HOME/go/src/github.com/lxc/`
+    - `git clone https://github.com/lxc/distrobuilder`
+    - `cd ./distrobuilder`
+    - `make`
+    - `sudo cp $HOME/go/bin/distrobuilder /sbin/distrobuilder`
+    - `sudo chown root:root /sbin/distrobuilder`
+    - `sudo chmod 755 /sbin/distrobuilder`
 - Clone this repo: `git clone https://github.com/MohrJonas/citadel`
 - Run the install script: `./citadel/install`
